@@ -1,0 +1,58 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "File Upload to Azure Storage";
+}
+
+<div class="text-center">
+    <h1 class="display-4">File Upload to Azure Storage</h1>
+    <p>Upload files securely to Azure Blob Storage using Managed Identity</p>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6 offset-md-3">
+        <div class="card">
+            <div class="card-header">
+                <h5>Upload File</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="file" class="form-label">Choose file:</label>
+                        <input type="file" class="form-control" id="file" name="file" required asp-for="UploadedFile" />
+                        <span asp-validation-for="UploadedFile" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Upload</button>
+                </form>
+
+                @if (!string.IsNullOrEmpty(Model.UploadMessage))
+                {
+                    <div class="alert @(Model.IsSuccess ? "alert-success" : "alert-danger") mt-3" role="alert">
+                        @Model.UploadMessage
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Model.UploadedFiles?.Any() == true)
+        {
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5>Uploaded Files</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        @foreach (var file in Model.UploadedFiles)
+                        {
+                            <li class="list-group-item">@file</li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
