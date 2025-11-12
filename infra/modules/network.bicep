@@ -15,7 +15,7 @@ param uniqueSuffix string
 // Variables
 // ============================================
 
-var vnetName = 'vnet-fileupload-${environment}-${uniqueSuffix}'
+var vnetName = 'vnet-file-${environment}-${take(uniqueSuffix, 8)}'
 var appServiceSubnetName = 'snet-appservice'
 var privateEndpointSubnetName = 'snet-privateendpoints'
 

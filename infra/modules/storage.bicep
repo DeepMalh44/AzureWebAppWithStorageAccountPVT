@@ -21,7 +21,7 @@ param privateDnsZoneId string
 // Variables
 // ============================================
 
-var storageAccountName = 'stfileupload${environment}${uniqueSuffix}'
+var storageAccountName = 'stfile${environment}${take(uniqueSuffix, 10)}'
 var containerName = 'uploads'
 
 // ============================================

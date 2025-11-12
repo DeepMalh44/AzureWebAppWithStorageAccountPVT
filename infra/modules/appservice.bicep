@@ -21,8 +21,8 @@ param vnetIntegrationSubnetId string
 // Variables
 // ============================================
 
-var appServicePlanName = 'plan-fileupload-${environment}-${uniqueSuffix}'
-var appServiceName = 'app-fileupload-${environment}-${uniqueSuffix}'
+var appServicePlanName = 'plan-file-${environment}-${take(uniqueSuffix, 8)}'
+var appServiceName = 'app-file-${environment}-${take(uniqueSuffix, 8)}'
 
 // ============================================
 // App Service Plan
