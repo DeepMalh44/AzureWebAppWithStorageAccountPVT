@@ -69,3 +69,39 @@ publish/
 
 # Azure artifacts
 *.bicep.json
+*.PublishSettings
+publish-profile.xml
+*.azurePubxml
+.azure/
+
+# Deployment artifacts
+*.zip
+output.tar.gz
+oryx-manifest.toml
+
+# VS Code
+.vscode/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+antenv/
+*.egg-info/
+dist/
+*.egg
+.pytest_cache/
+
+# Test files
+test-*.txt
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store

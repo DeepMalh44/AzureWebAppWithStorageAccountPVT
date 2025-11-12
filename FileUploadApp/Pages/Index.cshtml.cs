@@ -1,81 +1,69 @@
+﻿using Azure.Storage.Blobs;
+using Azure.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using FileUploadApp.Services;
-using System.ComponentModel.DataAnnotations;
-
-namespace FileUploadApp.Pages;
 
 public class IndexModel : PageModel
 {
-    private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<IndexModel> _logger;
-
-    [BindProperty]
-    [Required(ErrorMessage = "Please select a file to upload")]
-    public IFormFile? UploadedFile { get; set; }
-
-    public string? UploadMessage { get; set; }
+    private readonly IConfiguration _configuration;
+    
+    public string? Message { get; set; }
     public bool IsSuccess { get; set; }
-    public List<string>? UploadedFiles { get; set; }
 
-    public IndexModel(IFileStorageService fileStorageService, ILogger<IndexModel> logger)
+    public IndexModel(ILogger<IndexModel> logger, IConfiguration configuration)
     {
-        _fileStorageService = fileStorageService;
         _logger = logger;
+        _configuration = configuration;
     }
 
-    public async Task OnGetAsync()
+    public void OnGet()
+    {
+    }
+
+    public async Task<IActionResult> OnPostAsync(IFormFile file)
     {
         try
         {
-            UploadedFiles = await _fileStorageService.ListFilesAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading uploaded files");
-            UploadMessage = "Error loading uploaded files.";
-            IsSuccess = false;
-        }
-    }
-
-    public async Task<IActionResult> OnPostAsync()
-    {
-        if (!ModelState.IsValid || UploadedFile == null)
-        {
-            UploadMessage = "Please select a valid file to upload.";
-            IsSuccess = false;
-            return Page();
-        }
-
-        try
-        {
-            // Validate file size (max 10MB)
-            if (UploadedFile.Length > 10 * 1024 * 1024)
+            if (file == null || file.Length == 0)
             {
-                UploadMessage = "File size must be less than 10MB.";
+                Message = "Please select a file";
                 IsSuccess = false;
                 return Page();
             }
 
-            using var stream = UploadedFile.OpenReadStream();
-            var fileName = await _fileStorageService.UploadFileAsync(
-                stream, 
-                UploadedFile.FileName, 
-                UploadedFile.ContentType);
+            _logger.LogInformation($"Uploading file: {file.FileName}, Size: {file.Length} bytes");
 
-            UploadMessage = $"File '{UploadedFile.FileName}' uploaded successfully!";
+            var storageAccountName = "stfiledevo7bbcldbbn";
+            var containerName = "uploads";
+            var blobServiceUri = new Uri($"https://{storageAccountName}.blob.core.windows.net");
+
+            // Use only Managed Identity (no fallback to other credential types)
+            var blobServiceClient = new BlobServiceClient(blobServiceUri, new ManagedIdentityCredential());
+            var containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+            
+            await containerClient.CreateIfNotExistsAsync();
+
+            var blobName = $"{DateTime.UtcNow:yyyyMMdd_HHmmss}_{file.FileName}";
+            var blobClient = containerClient.GetBlobClient(blobName);
+
+            using (var stream = file.OpenReadStream())
+            {
+                await blobClient.UploadAsync(stream, overwrite: true);
+            }
+
+            _logger.LogInformation($"File uploaded successfully: {blobClient.Uri}");
+            
+            Message = $"File '{file.FileName}' uploaded successfully!";
             IsSuccess = true;
-
-            // Refresh file list
-            UploadedFiles = await _fileStorageService.ListFilesAsync();
+            return Page();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error uploading file");
-            UploadMessage = "An error occurred while uploading the file. Please try again.";
+            Message = $"Error: {ex.Message}";
             IsSuccess = false;
+            return Page();
         }
-
-        return Page();
     }
 }
